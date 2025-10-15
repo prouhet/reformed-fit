@@ -111,12 +111,18 @@ body {
   border-radius: 10px;
   transition: all 0.2s;
   font-family: inherit;
+  background: white;
+  color: #2d3748;
 }
 
 .text-input:focus {
   outline: none;
   border-color: #667eea;
-  background: #f7fafc;
+  background: white;
+}
+
+.text-input::placeholder {
+  color: #a0aec0;
 }
 
 .pin-input {
@@ -129,12 +135,20 @@ body {
   letter-spacing: 8px;
   text-align: center;
   font-family: inherit;
+  background: white;
+  color: #2d3748;
 }
 
 .pin-input:focus {
   outline: none;
   border-color: #667eea;
-  background: #f7fafc;
+  background: white;
+}
+
+.pin-input::placeholder {
+  color: #a0aec0;
+  letter-spacing: normal;
+  font-size: 16px;
 }
 
 .input-help {
