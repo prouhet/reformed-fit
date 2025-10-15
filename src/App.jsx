@@ -1,16 +1,24 @@
 // ============================================
-// App.jsx - MINIMAL WORKING VERSION
+// App.jsx - COMPLETE WALK CHALLENGE FLOW
 // Location: src/App.jsx
 //
-// This version works WITHOUT external components
-// We'll add components incrementally
+// All screens integrated with proper flow
 // ============================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 
+// Import all components (in real app, these would be separate files)
+import WalkAssessment from './components/WalkAssessment';
+import PlanOverview from './components/PlanOverview';
+import DashboardPreview from './components/DashboardPreview';
+import DailyCheckIn from './components/DailyCheckIn';
+import CompletionSuccess from './components/CompletionSuccess';
+import CompletionIncomplete from './components/CompletionIncomplete';
+import Roadmap from './components/Roadmap';
+
 function App() {
-  const [currentScreen, setCurrentScreen] = useState('puid'); // puid, setup, select
+  const [currentScreen, setCurrentScreen] = useState('puid'); 
   const [userData, setUserData] = useState({
     puid: '',
     name: '',
@@ -18,6 +26,7 @@ function App() {
     phone: '',
     pin: ''
   });
+  const [challengeData, setC
 
   const renderScreen = () => {
     switch (currentScreen) {
