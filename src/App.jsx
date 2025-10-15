@@ -1,55 +1,72 @@
 // ============================================
-// PU ID Entry Component - FIXED NAVIGATION
-// Location: src/components/PUIDEntry.jsx
+// App.jsx - MINIMAL WORKING VERSION
+// Location: src/App.jsx
 //
-// THE FIRST SCREEN USERS SEE
+// This version works WITHOUT external components
+// We'll add components incrementally
 // ============================================
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { checkUserExists, getUserByPUID } from '../utils/api';
+import React, { useState } from 'react';
+import './App.css';
 
-function PUIDEntry() {
-  const [puid, setPuid] = useState('');
-  const [pin, setPin] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [showPinEntry, setShowPinEntry] = useState(false);
-  const [error, setError] = useState('');
-  
-  const navigate = useNavigate();
-  const params = useParams();
+function App() {
+  const [currentScreen, setCurrentScreen] = useState('puid'); // puid, setup, select
+  const [userData, setUserData] = useState({
+    puid: '',
+    name: '',
+    email: '',
+    phone: '',
+    pin: ''
+  });
 
-  // If PUID is in URL, pre-fill it
-  useEffect(() => {
-    if (params.puid) {
-      setPuid(params.puid);
-      checkExistingAccount(params.puid);
-    }
-  }, [params.puid]);
-
-  const checkExistingAccount = async (puidToCheck) => {
-    setLoading(true);
-    setError('');
-    
-    try {
-      const exists = await checkUserExists(puidToCheck);
+  const renderScreen = () => {
+    switch (currentScreen) {
+      case 'puid':
+        return <PUIDEntryScreen onContinue={(puid) => {
+          setUserData({ ...userData, puid });
+          setCurrentScreen('setup');
+        }} />;
       
-      if (exists) {
-        // Account exists - show PIN entry
-        setShowPinEntry(true);
-      } else {
-        // No account - go to setup
-        navigate(`/p/${puidToCheck}/setup`);
-      }
-    } catch (err) {
-      console.error('Error checking user:', err);
-      setError('Error checking account. Please try again.');
-    } finally {
-      setLoading(false);
+      case 'setup':
+        return <AccountSetupScreen 
+          puid={userData.puid}
+          onContinue={(data) => {
+            setUserData({ ...userData, ...data });
+            setCurrentScreen('select');
+          }} 
+        />;
+      
+      case 'select':
+        return <ChallengeSelectScreen 
+          userName={userData.name}
+          onSelectChallenge={(challenge) => {
+            alert(`${challenge} challenge selected! More screens coming soon.`);
+          }}
+        />;
+      
+      default:
+        return <PUIDEntryScreen onContinue={(puid) => {
+          setUserData({ ...userData, puid });
+          setCurrentScreen('setup');
+        }} />;
     }
   };
 
-  const handlePUIDSubmit = async (e) => {
+  return (
+    <div className="app">
+      {renderScreen()}
+    </div>
+  );
+}
+
+// ============================================
+// SCREEN 1: PU ID ENTRY
+// ============================================
+function PUIDEntryScreen({ onContinue }) {
+  const [puid, setPuid] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
     
@@ -58,108 +75,20 @@ function PUIDEntry() {
       return;
     }
 
-    await checkExistingAccount(puid);
+    // For now, just continue to setup
+    // Later we'll check if account exists
+    onContinue(puid.toUpperCase());
   };
-
-  const handlePinSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      const user = await getUserByPUID(puid);
-      
-      if (!user) {
-        setError('Account not found');
-        return;
-      }
-
-      if (user.pin !== pin) {
-        setError('Incorrect PIN');
-        setPin('');
-        return;
-      }
-
-      // Successful login - store in session
-      localStorage.setItem('current_user_id', user.id);
-      localStorage.setItem('current_puid', puid);
-      
-      // Navigate to their dashboard
-      navigate(`/p/${puid}/select`);
-      
-    } catch (err) {
-      console.error('Login error:', err);
-      setError('Login failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (showPinEntry) {
-    return (
-      <div className="entry-container">
-        <div className="entry-card">
-          <div className="logo">STUDIO STRONG × PREMIER U</div>
-          
-          <h1 className="entry-title">Welcome Back!</h1>
-          <p className="entry-subtitle">Enter your PIN to continue</p>
-          
-          <form onSubmit={handlePinSubmit} className="entry-form">
-            <div className="puid-display">
-              <span className="puid-label">PU ID:</span>
-              <span className="puid-value">{puid}</span>
-              <button 
-                type="button" 
-                onClick={() => {
-                  setShowPinEntry(false);
-                  setPin('');
-                  setPuid('');
-                }}
-                className="change-link"
-              >
-                Change
-              </button>
-            </div>
-
-            <div className="input-group">
-              <label htmlFor="pin" className="input-label">4-Digit PIN</label>
-              <input
-                type="password"
-                id="pin"
-                className="pin-input"
-                value={pin}
-                onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                placeholder="••••"
-                maxLength="4"
-                required
-                autoFocus
-              />
-            </div>
-
-            {error && <div className="error-message">{error}</div>}
-
-            <button 
-              type="submit" 
-              className="submit-button"
-              disabled={loading || pin.length !== 4}
-            >
-              {loading ? 'Verifying...' : 'Log In'}
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="entry-container">
-      <div className="entry-card">
+    <div className="screen-container">
+      <div className="screen-card">
         <div className="logo">STUDIO STRONG × PREMIER U</div>
         
-        <h1 className="entry-title">Welcome to Your Challenges</h1>
-        <p className="entry-subtitle">Enter your Premier U Patient ID to get started</p>
+        <h1 className="screen-title">Welcome to Your Challenges</h1>
+        <p className="screen-subtitle">Enter your Premier U Patient ID to get started</p>
         
-        <form onSubmit={handlePUIDSubmit} className="entry-form">
+        <form onSubmit={handleSubmit} className="screen-form">
           <div className="input-group">
             <label htmlFor="puid" className="input-label">Premier U Patient ID</label>
             <input
@@ -172,192 +101,203 @@ function PUIDEntry() {
               required
               autoFocus
             />
-            <p className="input-help">
-              Example: PU123456 or just 123456
-            </p>
+            <p className="input-help">Example: PU123456 or just 123456</p>
           </div>
 
           {error && <div className="error-message">{error}</div>}
 
-          <button 
-            type="submit" 
-            className="submit-button"
-            disabled={loading}
-          >
-            {loading ? 'Checking...' : 'Continue'}
+          <button type="submit" className="submit-button">
+            Continue
           </button>
         </form>
 
         <div className="help-text">
           <p>First time here? Enter your PU ID to create your account.</p>
-          <p>Already have an account? Enter your PU ID and PIN to log in.</p>
         </div>
       </div>
-
-      <style jsx>{`
-        .entry-container {
-          min-height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          padding: 20px;
-        }
-
-        .entry-card {
-          background: white;
-          border-radius: 20px;
-          padding: 40px;
-          max-width: 480px;
-          width: 100%;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
-
-        .logo {
-          text-align: center;
-          font-size: 14px;
-          font-weight: 700;
-          color: #667eea;
-          letter-spacing: 2px;
-          margin-bottom: 30px;
-        }
-
-        .entry-title {
-          font-size: 32px;
-          font-weight: 800;
-          color: #2d3748;
-          text-align: center;
-          margin-bottom: 10px;
-        }
-
-        .entry-subtitle {
-          text-align: center;
-          color: #718096;
-          font-size: 16px;
-          margin-bottom: 30px;
-        }
-
-        .entry-form {
-          margin-bottom: 20px;
-        }
-
-        .input-group {
-          margin-bottom: 20px;
-        }
-
-        .input-label {
-          display: block;
-          font-weight: 600;
-          color: #2d3748;
-          margin-bottom: 8px;
-          font-size: 14px;
-        }
-
-        .text-input, .pin-input {
-          width: 100%;
-          padding: 14px;
-          font-size: 16px;
-          border: 2px solid #e2e8f0;
-          border-radius: 10px;
-          transition: all 0.2s;
-        }
-
-        .text-input:focus, .pin-input:focus {
-          outline: none;
-          border-color: #667eea;
-          background: #f7fafc;
-        }
-
-        .pin-input {
-          letter-spacing: 8px;
-          font-size: 24px;
-          text-align: center;
-        }
-
-        .input-help {
-          font-size: 13px;
-          color: #718096;
-          margin-top: 6px;
-        }
-
-        .puid-display {
-          background: #f7fafc;
-          padding: 16px;
-          border-radius: 10px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 20px;
-        }
-
-        .puid-label {
-          font-size: 14px;
-          color: #718096;
-          font-weight: 600;
-        }
-
-        .puid-value {
-          font-size: 18px;
-          color: #2d3748;
-          font-weight: 700;
-        }
-
-        .change-link {
-          background: none;
-          border: none;
-          color: #667eea;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          text-decoration: underline;
-        }
-
-        .submit-button {
-          width: 100%;
-          padding: 16px;
-          font-size: 18px;
-          font-weight: 700;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          border: none;
-          border-radius: 10px;
-          cursor: pointer;
-          transition: all 0.3s;
-        }
-
-        .submit-button:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .submit-button:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .error-message {
-          background: #fed7d7;
-          color: #c53030;
-          padding: 12px;
-          border-radius: 8px;
-          margin-bottom: 16px;
-          font-size: 14px;
-          text-align: center;
-        }
-
-        .help-text {
-          text-align: center;
-          font-size: 13px;
-          color: #718096;
-          line-height: 1.6;
-        }
-
-        .help-text p {
-          margin: 8px 0;
-        }
-      `}</style>
     </div>
   );
 }
 
-export default PUIDEntry;
+// ============================================
+// SCREEN 2: ACCOUNT SETUP
+// ============================================
+function AccountSetupScreen({ puid, onContinue }) {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    pin: '',
+    confirmPin: ''
+  });
+  const [error, setError] = useState('');
+
+  const handleChange = (field, value) => {
+    setFormData({ ...formData, [field]: value });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (formData.pin !== formData.confirmPin) {
+      setError('PINs do not match');
+      return;
+    }
+
+    if (formData.pin.length !== 4) {
+      setError('PIN must be 4 digits');
+      return;
+    }
+
+    // Store in localStorage for demo
+    localStorage.setItem('user_data', JSON.stringify({
+      puid,
+      ...formData
+    }));
+
+    onContinue(formData);
+  };
+
+  return (
+    <div className="screen-container">
+      <div className="screen-card">
+        <div className="logo">STUDIO STRONG × PREMIER U</div>
+        
+        <div className="puid-badge">Patient ID: {puid}</div>
+        
+        <h1 className="screen-title">Create Your Account</h1>
+        <p className="screen-subtitle">
+          You're creating a unique page at: <strong>app.reformed.fit/p/{puid}</strong>
+          <br />
+          Your PIN will be used to log back in.
+        </p>
+        
+        <form onSubmit={handleSubmit} className="screen-form">
+          <div className="input-group">
+            <label className="input-label">Full Name</label>
+            <input
+              type="text"
+              className="text-input"
+              value={formData.name}
+              onChange={(e) => handleChange('name', e.target.value)}
+              placeholder="John Doe"
+              required
+            />
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">Email</label>
+            <input
+              type="email"
+              className="text-input"
+              value={formData.email}
+              onChange={(e) => handleChange('email', e.target.value)}
+              placeholder="john@example.com"
+              required
+            />
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">Phone</label>
+            <input
+              type="tel"
+              className="text-input"
+              value={formData.phone}
+              onChange={(e) => handleChange('phone', e.target.value)}
+              placeholder="(555) 123-4567"
+              required
+            />
+          </div>
+
+          <div className="divider"></div>
+
+          <div className="input-group">
+            <label className="input-label">Create 4-Digit PIN</label>
+            <input
+              type="password"
+              className="pin-input"
+              value={formData.pin}
+              onChange={(e) => handleChange('pin', e.target.value.replace(/\D/g, '').slice(0, 4))}
+              placeholder="••••"
+              maxLength="4"
+              required
+            />
+            <p className="input-help">You'll use this PIN to log back in</p>
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">Confirm PIN</label>
+            <input
+              type="password"
+              className="pin-input"
+              value={formData.confirmPin}
+              onChange={(e) => handleChange('confirmPin', e.target.value.replace(/\D/g, '').slice(0, 4))}
+              placeholder="••••"
+              maxLength="4"
+              required
+            />
+          </div>
+
+          {error && <div className="error-message">{error}</div>}
+
+          <button type="submit" className="submit-button">
+            Create Account
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// SCREEN 3: CHALLENGE SELECTION
+// ============================================
+function ChallengeSelectScreen({ userName, onSelectChallenge }) {
+  return (
+    <div className="screen-container">
+      <div className="screen-card">
+        <div className="logo">STUDIO STRONG × PREMIER U</div>
+        
+        <h1 className="screen-title">Welcome, {userName}!</h1>
+        <p className="screen-subtitle">Choose your first 30-day challenge</p>
+        
+        <div className="challenge-grid">
+          <button 
+            className="challenge-card"
+            onClick={() => onSelectChallenge('Walk')}
+          >
+            <div className="challenge-icon">🚶‍♂️</div>
+            <h3 className="challenge-name">Walk Challenge</h3>
+            <p className="challenge-description">
+              Build a daily walking habit
+              <br />
+              Personalized to your level
+            </p>
+            <div className="challenge-button">Start Walk Challenge</div>
+          </button>
+
+          <button 
+            className="challenge-card"
+            onClick={() => onSelectChallenge('Protein')}
+          >
+            <div className="challenge-icon">🥩</div>
+            <h3 className="challenge-name">Protein Challenge</h3>
+            <p className="challenge-description">
+              Track 100g protein daily
+              <br />
+              Build muscle-preserving habits
+            </p>
+            <div className="challenge-button">Start Protein Challenge</div>
+          </button>
+        </div>
+
+        <div className="info-box">
+          ℹ️ Complete challenges to earn achievement stickers!
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;
