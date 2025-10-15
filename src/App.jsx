@@ -26,7 +26,7 @@ function App() {
     phone: '',
     pin: ''
   });
-  const [challengeData, setC
+  const [challengeData, setChallengeData] = useState(null);
 
   const renderScreen = () => {
     switch (currentScreen) {
