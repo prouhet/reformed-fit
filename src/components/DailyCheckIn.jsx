@@ -107,7 +107,7 @@ const WALKING_TIPS = {
   ]
 };
 
-function DailyCheckIn({ onComplete, onNavigate }) {
+function DailyCheckIn({ onComplete, onViewRoadmap, onSettings }) {
   const [challenge, setChallenge] = useState(null);
   const [currentDay, setCurrentDay] = useState(1);
   const [todayGoal, setTodayGoal] = useState(5);
@@ -345,12 +345,18 @@ function DailyCheckIn({ onComplete, onNavigate }) {
             >
               Back to Dashboard
             </button>
-            <button 
-              className="nav-button"
-              onClick={() => onNavigate('roadmap')}
-            >
-              View Roadmap
-            </button>
+           <button 
+  className="nav-button"
+  onClick={() => onViewRoadmap && onViewRoadmap()}
+>
+  View Roadmap
+</button>
+<button 
+  className="nav-button"
+  onClick={() => onSettings && onSettings()}
+>
+  Settings
+</button>
           </div>
         </div>
 
