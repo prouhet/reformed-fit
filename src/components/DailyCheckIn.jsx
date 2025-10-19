@@ -292,16 +292,7 @@ if (currentDay === 0) {
   );
 }
 
-// POST-SUBMIT VIEW
-if (checkedIn) {
-
-  
-
-
-
-
-
-  
+ 
   // POST-SUBMIT VIEW
   if (checkedIn) {
     const getTomorrowGoal = () => {
