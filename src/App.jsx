@@ -99,13 +99,13 @@ case 'puid':
           }}
         />;
 
-      case 'plan':
-        return <PlanOverview 
-          plan={assessmentData}
-          onContinue={() => {
+    case 'plan':
+      return <PlanOverview 
+         plan={assessmentData?.plan} 
+          onStartChallenge={() => {  
             setCurrentScreen('dashboard-preview');
-          }}
-        />;
+    }}
+  />;
 
       case 'dashboard-preview':
         return <DashboardPreview 
