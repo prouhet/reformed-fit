@@ -11,9 +11,10 @@ function PUIDEntry({ onContinue }) {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isNewUser, setIsNewUser] = useState(true);
+  const [step, setStep] = useState('puid'); // 'puid' or 'pin'
+  const [existingUser, setExistingUser] = useState(null);
 
-  const handleSubmit = async (e) => {
+  const handleCheckPUID = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -26,7 +27,7 @@ function PUIDEntry({ onContinue }) {
 
     try {
       // Check if user exists
-      const { data: existingUser, error: fetchError } = await supabase
+      const { data: user, error: fetchError } = await supabase
         .from('users')
         .select('*')
         .eq('pu_id', puid.toUpperCase())
@@ -40,29 +41,13 @@ function PUIDEntry({ onContinue }) {
         return;
       }
 
-      if (existingUser) {
-        // User exists - verify PIN
-        if (!pin) {
-          setError('Please enter your PIN');
-          setLoading(false);
-          return;
-        }
-
-        if (existingUser.pin_hash !== pin) {
-          setError('Incorrect PIN');
-          setLoading(false);
-          return;
-        }
-
-        // Login successful
-        localStorage.setItem('user_id', existingUser.id);
-        localStorage.setItem('user_data', JSON.stringify(existingUser));
-        
-        console.log('Login successful:', existingUser);
-        onContinue(existingUser);
-        
+      if (user) {
+        // Existing user - show PIN field
+        setExistingUser(user);
+        setStep('pin');
+        setLoading(false);
       } else {
-        // New user - go to account setup
+        // New user - go directly to account setup
         console.log('New user, proceeding to account setup');
         onContinue({ puid: puid.toUpperCase(), isNew: true });
       }
@@ -74,6 +59,94 @@ function PUIDEntry({ onContinue }) {
     }
   };
 
+  const handleVerifyPIN = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    if (!pin || pin.length !== 4) {
+      setError('Please enter your 4-digit PIN');
+      setLoading(false);
+      return;
+    }
+
+    if (existingUser.pin_hash !== pin) {
+      setError('Incorrect PIN');
+      setLoading(false);
+      return;
+    }
+
+    // Login successful
+    localStorage.setItem('user_id', existingUser.id);
+    localStorage.setItem('user_data', JSON.stringify(existingUser));
+    
+    console.log('Login successful:', existingUser);
+    onContinue(existingUser);
+  };
+
+  if (step === 'pin') {
+    return (
+      <div className="screen-container">
+        <div className="screen-card">
+          <div className="logo">REFORMED.FIT × PREMIER U</div>
+          
+          <h1 className="screen-title">Welcome Back!</h1>
+          <p className="screen-subtitle">Enter your PIN to continue</p>
+          
+          <div className="puid-badge">Patient ID: {puid}</div>
+          
+          <form onSubmit={handleVerifyPIN} className="screen-form">
+            <div className="input-group">
+              <label htmlFor="pin" className="input-label">4-Digit PIN</label>
+              <input
+                type="password"
+                id="pin"
+                className="text-input"
+                value={pin}
+                onChange={(e) => setPin(e.target.value)}
+                placeholder="0000"
+                maxLength="4"
+                pattern="[0-9]{4}"
+                required
+                autoFocus
+                disabled={loading}
+              />
+            </div>
+
+            {error && <div className="error-message">{error}</div>}
+
+            <button 
+              type="submit" 
+              className="submit-button"
+              disabled={loading}
+            >
+              {loading ? 'Verifying...' : 'Login'}
+            </button>
+
+            <button 
+              type="button" 
+              onClick={() => {
+                setStep('puid');
+                setPin('');
+                setError('');
+              }}
+              style={{ 
+                marginTop: '12px', 
+                background: 'transparent', 
+                color: '#667eea', 
+                border: 'none',
+                cursor: 'pointer',
+                textDecoration: 'underline'
+              }}
+            >
+              ← Use different PU ID
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="screen-container">
       <div className="screen-card">
@@ -82,7 +155,7 @@ function PUIDEntry({ onContinue }) {
         <h1 className="screen-title">Welcome to Your Challenges</h1>
         <p className="screen-subtitle">Enter your Premier U Patient ID to get started</p>
         
-        <form onSubmit={handleSubmit} className="screen-form">
+        <form onSubmit={handleCheckPUID} className="screen-form">
           <div className="input-group">
             <label htmlFor="puid" className="input-label">Premier U Patient ID</label>
             <input
@@ -99,28 +172,6 @@ function PUIDEntry({ onContinue }) {
             <p className="input-help">Example: PU123456 or just 123456</p>
           </div>
 
-          <div className="input-group">
-            <label htmlFor="pin" className="input-label">
-              {isNewUser ? 'First time? Leave PIN blank' : '4-Digit PIN'}
-            </label>
-            <input
-              type="password"
-              id="pin"
-              className="text-input"
-              value={pin}
-              onChange={(e) => setPin(e.target.value)}
-              placeholder="0000"
-              maxLength="4"
-              pattern="[0-9]{4}"
-              disabled={loading}
-            />
-            <p className="input-help">
-              {isNewUser 
-                ? "You'll create a PIN in the next step" 
-                : "Enter your 4-digit PIN to login"}
-            </p>
-          </div>
-
           {error && <div className="error-message">{error}</div>}
 
           <button 
@@ -128,7 +179,7 @@ function PUIDEntry({ onContinue }) {
             className="submit-button"
             disabled={loading}
           >
-            {loading ? 'Loading...' : 'Continue'}
+            {loading ? 'Checking...' : 'Continue'}
           </button>
         </form>
 
