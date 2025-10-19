@@ -4,7 +4,12 @@
 // UPDATED FOR SUPABASE
 // ============================================
 import React, { useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 function EmailPINLogin({ onSuccess, onNewPatient }) {
   const [email, setEmail] = useState('');
