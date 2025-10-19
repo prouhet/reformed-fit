@@ -1,7 +1,13 @@
 // ============================================
-// FILE: src/components/Settings.jsx - WITH PIN CHANGE
+// FILE: src/components/Settings.jsx - WITH SIMPLIFIED PIN CHANGE
 // ============================================
 import React, { useState, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 function Settings({ onBack }) {
   const [userData, setUserData] = useState(null);
@@ -20,7 +26,6 @@ function Settings({ onBack }) {
     phone: ''
   });
   const [pinForm, setPinForm] = useState({
-    currentPin: '',
     newPin: '',
     confirmPin: ''
   });
@@ -56,22 +61,34 @@ function Settings({ onBack }) {
     }, 500);
   };
 
-  const handleSaveAccount = () => {
-    const updatedUser = { ...userData, ...accountForm };
-    
-    // Update in users array
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const userIndex = users.findIndex(u => u.puid === userData.puid);
-    if (userIndex !== -1) {
-      users[userIndex] = updatedUser;
-      localStorage.setItem('users', JSON.stringify(users));
+  const handleSaveAccount = async () => {
+    try {
+      // Update in Supabase
+      const { error } = await supabase
+        .from('users')
+        .update({
+          name: accountForm.name,
+          email: accountForm.email,
+          phone: accountForm.phone
+        })
+        .eq('id', userData.id);
+
+      if (error) {
+        console.error('Supabase error:', error);
+        alert('Failed to update account. Please try again.');
+        return;
+      }
+
+      const updatedUser = { ...userData, ...accountForm };
+      localStorage.setItem('user_data', JSON.stringify(updatedUser));
+      localStorage.setItem('current_user', JSON.stringify(updatedUser));
+      setUserData(updatedUser);
+      setIsEditingAccount(false);
+      alert('Account information updated successfully!');
+    } catch (err) {
+      console.error('Update error:', err);
+      alert('Failed to update account. Please try again.');
     }
-    
-    localStorage.setItem('user_data', JSON.stringify(updatedUser));
-    localStorage.setItem('current_user', JSON.stringify(updatedUser));
-    setUserData(updatedUser);
-    setIsEditingAccount(false);
-    alert('Account information updated successfully!');
   };
 
   const handleCancelAccountEdit = () => {
@@ -83,13 +100,7 @@ function Settings({ onBack }) {
     setIsEditingAccount(false);
   };
 
-  const handleChangePin = () => {
-    // Validate current PIN
-    if (pinForm.currentPin !== userData.pin) {
-      alert('Current PIN is incorrect');
-      return;
-    }
-    
+  const handleChangePin = async () => {
     // Validate new PIN
     if (pinForm.newPin.length !== 4) {
       alert('New PIN must be exactly 4 digits');
@@ -98,27 +109,38 @@ function Settings({ onBack }) {
     
     // Validate confirmation
     if (pinForm.newPin !== pinForm.confirmPin) {
-      alert('New PINs do not match!');
+      alert('PINs do not match!');
       return;
     }
     
-    // Update PIN
-    const updatedUser = { ...userData, pin: pinForm.newPin };
-    
-    // Update in users array
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const userIndex = users.findIndex(u => u.puid === userData.puid);
-    if (userIndex !== -1) {
-      users[userIndex] = updatedUser;
-      localStorage.setItem('users', JSON.stringify(users));
+    try {
+      // Update PIN in Supabase
+      const { error } = await supabase
+        .from('users')
+        .update({ 
+          pin: pinForm.newPin,
+          pin_hash: pinForm.newPin  // Update both for compatibility
+        })
+        .eq('id', userData.id);
+
+      if (error) {
+        console.error('Supabase error:', error);
+        alert('Failed to change PIN. Please try again.');
+        return;
+      }
+
+      // Update local storage
+      const updatedUser = { ...userData, pin: pinForm.newPin, pin_hash: pinForm.newPin };
+      localStorage.setItem('user_data', JSON.stringify(updatedUser));
+      localStorage.setItem('current_user', JSON.stringify(updatedUser));
+      setUserData(updatedUser);
+      setIsChangingPin(false);
+      setPinForm({ newPin: '', confirmPin: '' });
+      alert('PIN changed successfully!');
+    } catch (err) {
+      console.error('PIN change error:', err);
+      alert('Failed to change PIN. Please try again.');
     }
-    
-    localStorage.setItem('user_data', JSON.stringify(updatedUser));
-    localStorage.setItem('current_user', JSON.stringify(updatedUser));
-    setUserData(updatedUser);
-    setIsChangingPin(false);
-    setPinForm({ currentPin: '', newPin: '', confirmPin: '' });
-    alert('PIN changed successfully!');
   };
 
   const handleReset = () => {
@@ -285,7 +307,7 @@ function Settings({ onBack }) {
             )}
           </div>
 
-          {/* Security Section - PIN Change */}
+          {/* Security Section - SIMPLIFIED PIN Change */}
           <div style={{ background: 'white', padding: '24px', borderRadius: '12px', border: '2px solid #e2e8f0', marginBottom: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <div style={{ fontSize: '18px', fontWeight: '700', color: '#2d3748' }}>SECURITY</div>
@@ -310,30 +332,6 @@ function Settings({ onBack }) {
 
             {isChangingPin ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#2d3748', marginBottom: '6px' }}>
-                    Current PIN
-                  </label>
-                  <input
-                    type="password"
-                    inputMode="numeric"
-                    maxLength="4"
-                    value={pinForm.currentPin}
-                    onChange={(e) => setPinForm({...pinForm, currentPin: e.target.value.replace(/\D/g, '')})}
-                    placeholder="••••"
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      fontSize: '18px',
-                      border: '2px solid #e2e8f0',
-                      borderRadius: '6px',
-                      outline: 'none',
-                      letterSpacing: '6px',
-                      textAlign: 'center',
-                      fontWeight: '700'
-                    }}
-                  />
-                </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#2d3748', marginBottom: '6px' }}>
                     New PIN
@@ -385,17 +383,17 @@ function Settings({ onBack }) {
                 <div style={{ display: 'flex', gap: '12px' }}>
                   <button
                     onClick={handleChangePin}
-                    disabled={pinForm.currentPin.length !== 4 || pinForm.newPin.length !== 4 || pinForm.confirmPin.length !== 4}
+                    disabled={pinForm.newPin.length !== 4 || pinForm.confirmPin.length !== 4}
                     style={{
                       flex: 1,
                       padding: '12px',
-                      background: (pinForm.currentPin.length === 4 && pinForm.newPin.length === 4 && pinForm.confirmPin.length === 4) ? '#48bb78' : '#cbd5e0',
+                      background: (pinForm.newPin.length === 4 && pinForm.confirmPin.length === 4) ? '#48bb78' : '#cbd5e0',
                       color: 'white',
                       border: 'none',
                       borderRadius: '6px',
                       fontSize: '14px',
                       fontWeight: '600',
-                      cursor: (pinForm.currentPin.length === 4 && pinForm.newPin.length === 4 && pinForm.confirmPin.length === 4) ? 'pointer' : 'not-allowed'
+                      cursor: (pinForm.newPin.length === 4 && pinForm.confirmPin.length === 4) ? 'pointer' : 'not-allowed'
                     }}
                   >
                     Save New PIN
@@ -403,7 +401,7 @@ function Settings({ onBack }) {
                   <button
                     onClick={() => {
                       setIsChangingPin(false);
-                      setPinForm({ currentPin: '', newPin: '', confirmPin: '' });
+                      setPinForm({ newPin: '', confirmPin: '' });
                     }}
                     style={{
                       flex: 1,
