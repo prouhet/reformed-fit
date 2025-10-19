@@ -1192,6 +1192,12 @@ function SettingsScreen({ onBack }) {
     emailRemindersEnabled: true
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [isEditingAccount, setIsEditingAccount] = useState(false);
+  const [accountForm, setAccountForm] = useState({
+    name: '',
+    email: '',
+    phone: ''
+  });
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user_data');
@@ -1199,7 +1205,13 @@ function SettingsScreen({ onBack }) {
     const savedSettings = localStorage.getItem('user_settings');
     
     if (savedUser) {
-      setUserData(JSON.parse(savedUser));
+      const user = JSON.parse(savedUser);
+      setUserData(user);
+      setAccountForm({
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || ''
+      });
     }
     if (savedChallenge) {
       setChallenge(JSON.parse(savedChallenge));
@@ -1216,6 +1228,23 @@ function SettingsScreen({ onBack }) {
       setIsSaving(false);
       alert('Settings saved successfully!');
     }, 500);
+  };
+
+  const handleSaveAccount = () => {
+    const updatedUser = { ...userData, ...accountForm };
+    localStorage.setItem('user_data', JSON.stringify(updatedUser));
+    setUserData(updatedUser);
+    setIsEditingAccount(false);
+    alert('Account information updated successfully!');
+  };
+
+  const handleCancelAccountEdit = () => {
+    setAccountForm({
+      name: userData.name || '',
+      email: userData.email || '',
+      phone: userData.phone || ''
+    });
+    setIsEditingAccount(false);
   };
 
   const handleReset = () => {
@@ -1241,21 +1270,134 @@ function SettingsScreen({ onBack }) {
       <div style={{ maxWidth: '600px', margin: '0 auto' }}>
         {/* Account Info Section */}
         <div style={{ background: 'white', padding: '24px', borderRadius: '12px', border: '2px solid #e2e8f0', marginBottom: '16px' }}>
-          <div style={{ fontSize: '18px', fontWeight: '700', color: '#2d3748', marginBottom: '16px' }}>━━━ ACCOUNT INFO ━━━</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div>
-              <div style={{ fontSize: '13px', color: '#718096', marginBottom: '4px' }}>Name</div>
-              <div style={{ fontSize: '15px', color: '#2d3748', fontWeight: '600' }}>{userData?.name || 'Not set'}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: '13px', color: '#718096', marginBottom: '4px' }}>Email</div>
-              <div style={{ fontSize: '15px', color: '#2d3748', fontWeight: '600' }}>{userData?.email || 'Not set'}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: '13px', color: '#718096', marginBottom: '4px' }}>Phone</div>
-              <div style={{ fontSize: '15px', color: '#2d3748', fontWeight: '600' }}>{userData?.phone || 'Not set'}</div>
-            </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div style={{ fontSize: '18px', fontWeight: '700', color: '#2d3748' }}>━━━ ACCOUNT INFO ━━━</div>
+            {!isEditingAccount && (
+              <button
+                onClick={() => setIsEditingAccount(true)}
+                style={{
+                  padding: '8px 16px',
+                  background: '#667eea',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                Edit
+              </button>
+            )}
           </div>
+          
+          {isEditingAccount ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#2d3748', marginBottom: '6px' }}>
+                  Name
+                </label>
+                <input
+                  type="text"
+                  value={accountForm.name}
+                  onChange={(e) => setAccountForm({...accountForm, name: e.target.value})}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    fontSize: '15px',
+                    border: '2px solid #e2e8f0',
+                    borderRadius: '6px',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#2d3748', marginBottom: '6px' }}>
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={accountForm.email}
+                  onChange={(e) => setAccountForm({...accountForm, email: e.target.value})}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    fontSize: '15px',
+                    border: '2px solid #e2e8f0',
+                    borderRadius: '6px',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#2d3748', marginBottom: '6px' }}>
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  value={accountForm.phone}
+                  onChange={(e) => setAccountForm({...accountForm, phone: e.target.value})}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    fontSize: '15px',
+                    border: '2px solid #e2e8f0',
+                    borderRadius: '6px',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button
+                  onClick={handleSaveAccount}
+                  style={{
+                    flex: 1,
+                    padding: '12px',
+                    background: '#48bb78',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Save Changes
+                </button>
+                <button
+                  onClick={handleCancelAccountEdit}
+                  style={{
+                    flex: 1,
+                    padding: '12px',
+                    background: '#e2e8f0',
+                    color: '#4a5568',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div>
+                <div style={{ fontSize: '13px', color: '#718096', marginBottom: '4px' }}>Name</div>
+                <div style={{ fontSize: '15px', color: '#2d3748', fontWeight: '600' }}>{userData?.name || 'Not set'}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '13px', color: '#718096', marginBottom: '4px' }}>Email</div>
+                <div style={{ fontSize: '15px', color: '#2d3748', fontWeight: '600' }}>{userData?.email || 'Not set'}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '13px', color: '#718096', marginBottom: '4px' }}>Phone</div>
+                <div style={{ fontSize: '15px', color: '#2d3748', fontWeight: '600' }}>{userData?.phone || 'Not set'}</div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Email Reminders Section */}
