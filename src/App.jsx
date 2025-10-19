@@ -1186,10 +1186,17 @@ function RoadmapScreen({ onBack }) {
 function SettingsScreen({ onBack }) {
   const [userData, setUserData] = useState(null);
   const [challenge, setChallenge] = useState(null);
+  const [settings, setSettings] = useState({
+    reminderTime: '20:00',
+    timezone: 'America/Chicago',
+    emailRemindersEnabled: true
+  });
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user_data');
     const savedChallenge = localStorage.getItem('walk_challenge');
+    const savedSettings = localStorage.getItem('user_settings');
     
     if (savedUser) {
       setUserData(JSON.parse(savedUser));
@@ -1197,74 +1204,203 @@ function SettingsScreen({ onBack }) {
     if (savedChallenge) {
       setChallenge(JSON.parse(savedChallenge));
     }
+    if (savedSettings) {
+      setSettings(JSON.parse(savedSettings));
+    }
   }, []);
 
+  const handleSaveSettings = () => {
+    setIsSaving(true);
+    localStorage.setItem('user_settings', JSON.stringify(settings));
+    setTimeout(() => {
+      setIsSaving(false);
+      alert('Settings saved successfully!');
+    }, 500);
+  };
+
   const handleReset = () => {
-    if (window.confirm('Are you sure you want to reset your challenge? This cannot be undone.')) {
+    if (window.confirm('Are you sure you want to reset your challenge? This will delete all your progress!')) {
       localStorage.removeItem('walk_challenge');
-      window.location.href = '/';
+      localStorage.removeItem('assessment_data');
+      alert('Challenge reset successfully!');
+      window.location.reload();
     }
   };
 
-  if (!userData) {
-    return <div>Loading...</div>;
-  }
-
   return (
     <div className="screen-container">
-      <div className="screen-card" style={{ maxWidth: '500px' }}>
-        <button onClick={onBack} style={{ marginBottom: '20px', padding: '10px 20px', background: 'white', border: '2px solid #e2e8f0', borderRadius: '8px', color: '#4a5568', fontWeight: '600', cursor: 'pointer' }}>
-          ← Back
-        </button>
-
-        <div className="logo">STUDIO STRONG × PREMIER U</div>
+      <div className="screen-card" style={{ maxWidth: '700px' }}>
+        <button onClick={onBack} className="back-button">← Back</button>
         
-        <h1 style={{ fontSize: '28px', fontWeight: '800', color: '#2d3748', marginBottom: '30px', textAlign: 'center' }}>Settings</h1>
+        <div className="logo">STUDIO STRONG × PREMIER U</div>
+        <h1 style={{ fontSize: '28px', fontWeight: '800', color: '#2d3748', marginBottom: '8px', textAlign: 'center' }}>Settings</h1>
+        <p style={{ fontSize: '15px', color: '#718096', textAlign: 'center', marginBottom: '32px' }}>
+          Manage your account and preferences
+        </p>
 
-        <div style={{ background: '#f7fafc', padding: '20px', borderRadius: '12px', marginBottom: '20px', border: '2px solid #e2e8f0' }}>
-          <div style={{ fontSize: '16px', fontWeight: '700', color: '#2d3748', marginBottom: '16px' }}>Account Information</div>
+      <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+        {/* Account Info Section */}
+        <div style={{ background: 'white', padding: '24px', borderRadius: '12px', border: '2px solid #e2e8f0', marginBottom: '16px' }}>
+          <div style={{ fontSize: '18px', fontWeight: '700', color: '#2d3748', marginBottom: '16px' }}>━━━ ACCOUNT INFO ━━━</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div>
-              <div style={{ fontSize: '12px', color: '#718096', fontWeight: '600', marginBottom: '4px' }}>Patient ID</div>
-              <div style={{ fontSize: '15px', color: '#2d3748', fontWeight: '600' }}>{userData.puid}</div>
+              <div style={{ fontSize: '13px', color: '#718096', marginBottom: '4px' }}>Name</div>
+              <div style={{ fontSize: '15px', color: '#2d3748', fontWeight: '600' }}>{userData?.name || 'Not set'}</div>
             </div>
             <div>
-              <div style={{ fontSize: '12px', color: '#718096', fontWeight: '600', marginBottom: '4px' }}>Name</div>
-              <div style={{ fontSize: '15px', color: '#2d3748' }}>{userData.name}</div>
+              <div style={{ fontSize: '13px', color: '#718096', marginBottom: '4px' }}>Email</div>
+              <div style={{ fontSize: '15px', color: '#2d3748', fontWeight: '600' }}>{userData?.email || 'Not set'}</div>
             </div>
             <div>
-              <div style={{ fontSize: '12px', color: '#718096', fontWeight: '600', marginBottom: '4px' }}>Email</div>
-              <div style={{ fontSize: '15px', color: '#2d3748' }}>{userData.email}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: '12px', color: '#718096', fontWeight: '600', marginBottom: '4px' }}>Phone</div>
-              <div style={{ fontSize: '15px', color: '#2d3748' }}>{userData.phone}</div>
+              <div style={{ fontSize: '13px', color: '#718096', marginBottom: '4px' }}>Phone</div>
+              <div style={{ fontSize: '15px', color: '#2d3748', fontWeight: '600' }}>{userData?.phone || 'Not set'}</div>
             </div>
           </div>
         </div>
 
-{challenge && (
-          <div style={{ background: '#f7fafc', padding: '20px', borderRadius: '12px', marginBottom: '20px', border: '2px solid #e2e8f0' }}>
-            <div style={{ fontSize: '16px', fontWeight: '700', color: '#2d3748', marginBottom: '16px' }}>Current Challenge</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div>
-                <div style={{ fontSize: '12px', color: '#718096', fontWeight: '600', marginBottom: '4px' }}>Challenge</div>
-                <div style={{ fontSize: '15px', color: '#2d3748' }}>🚶‍♂️ Walk Challenge ({challenge.level})</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '12px', color: '#718096', fontWeight: '600', marginBottom: '4px' }}>Progress</div>
-                <div style={{ fontSize: '15px', color: '#2d3748' }}>Day {challenge.currentDay} of 30</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '12px', color: '#718096', fontWeight: '600', marginBottom: '4px' }}>Points</div>
-                <div style={{ fontSize: '15px', color: '#2d3748' }}>{challenge.totalPoints} / 60</div>
-              </div>
-            </div>
+        {/* Email Reminders Section */}
+        <div style={{ background: 'white', padding: '24px', borderRadius: '12px', border: '2px solid #e2e8f0', marginBottom: '16px' }}>
+          <div style={{ fontSize: '18px', fontWeight: '700', color: '#2d3748', marginBottom: '16px' }}>━━━ EMAIL REMINDERS ━━━</div>
+          
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={settings.emailRemindersEnabled}
+                onChange={(e) => setSettings({...settings, emailRemindersEnabled: e.target.checked})}
+                style={{ width: '20px', height: '20px', marginRight: '12px', cursor: 'pointer' }}
+              />
+              <span style={{ fontSize: '15px', color: '#2d3748' }}>Send reminder if I forget to check in</span>
+            </label>
           </div>
-        )}
 
-        <div style={{ background: '#fff5f5', padding: '20px', borderRadius: '12px', border: '2px solid #fc8181' }}>
-          <div style={{ fontSize: '16px', fontWeight: '700', color: '#c53030', marginBottom: '12px' }}>⚠️ Danger Zone</div>
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#2d3748', marginBottom: '8px' }}>
+              Reminder Time
+            </label>
+            <input
+              type="time"
+              value={settings.reminderTime}
+              onChange={(e) => setSettings({...settings, reminderTime: e.target.value})}
+              style={{
+                width: '100%',
+                padding: '12px',
+                fontSize: '15px',
+                border: '2px solid #e2e8f0',
+                borderRadius: '8px',
+                outline: 'none'
+              }}
+            />
+            <p style={{ marginTop: '6px', fontSize: '13px', color: '#718096' }}>
+              Get an email if you forget to check in by this time
+            </p>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#2d3748', marginBottom: '8px' }}>
+              Timezone
+            </label>
+            <select
+              value={settings.timezone}
+              onChange={(e) => setSettings({...settings, timezone: e.target.value})}
+              style={{
+                width: '100%',
+                padding: '12px',
+                fontSize: '15px',
+                border: '2px solid #e2e8f0',
+                borderRadius: '8px',
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="America/Chicago">Central (CST/CDT)</option>
+              <option value="America/New_York">Eastern (EST/EDT)</option>
+              <option value="America/Denver">Mountain (MST/MDT)</option>
+              <option value="America/Los_Angeles">Pacific (PST/PDT)</option>
+              <option value="America/Phoenix">Arizona (MST)</option>
+            </select>
+          </div>
+
+          <button
+            onClick={handleSaveSettings}
+            disabled={isSaving}
+            style={{
+              width: '100%',
+              padding: '14px',
+              background: isSaving ? '#a0aec0' : '#667eea',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '16px',
+              fontWeight: '700',
+              cursor: isSaving ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {isSaving ? 'SAVING...' : 'SAVE CHANGES'}
+          </button>
+        </div>
+
+        {/* My Challenges Section */}
+        <div style={{ background: 'white', padding: '24px', borderRadius: '12px', border: '2px solid #e2e8f0', marginBottom: '16px' }}>
+          <div style={{ fontSize: '18px', fontWeight: '700', color: '#2d3748', marginBottom: '16px' }}>━━━ MY CHALLENGES ━━━</div>
+          
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ fontSize: '14px', fontWeight: '600', color: '#2d3748', marginBottom: '8px' }}>Active:</div>
+            {challenge ? (
+              <div style={{ fontSize: '14px', color: '#4a5568', paddingLeft: '12px' }}>
+                • Walk Challenge (Day {challenge.current_day}/30)
+              </div>
+            ) : (
+              <div style={{ fontSize: '14px', color: '#a0aec0', paddingLeft: '12px' }}>No active challenges</div>
+            )}
+          </div>
+
+          <div>
+            <div style={{ fontSize: '14px', fontWeight: '600', color: '#2d3748', marginBottom: '8px' }}>Completed:</div>
+            <div style={{ fontSize: '14px', color: '#a0aec0', paddingLeft: '12px' }}>None yet</div>
+          </div>
+        </div>
+
+        {/* Upgrade Section */}
+        <div style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', padding: '24px', borderRadius: '12px', marginBottom: '16px', color: 'white' }}>
+          <div style={{ fontSize: '18px', fontWeight: '700', marginBottom: '8px' }}>━━━ UPGRADE ━━━</div>
+          <div style={{ fontSize: '15px', marginBottom: '16px', opacity: '0.95' }}>
+            Need daily accountability?
+          </div>
+          <button
+            style={{
+              width: '100%',
+              padding: '14px',
+              background: 'white',
+              color: '#667eea',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '16px',
+              fontWeight: '700',
+              cursor: 'pointer'
+            }}
+          >
+            Add Accountability - $49/mo
+          </button>
+          <p style={{ marginTop: '12px', fontSize: '13px', textAlign: 'center', opacity: '0.9' }}>
+            Daily text check-ins with personalized coaching
+          </p>
+        </div>
+
+        {/* Support Section */}
+        <div style={{ background: 'white', padding: '24px', borderRadius: '12px', border: '2px solid #e2e8f0', marginBottom: '16px' }}>
+          <div style={{ fontSize: '18px', fontWeight: '700', color: '#2d3748', marginBottom: '16px' }}>━━━ SUPPORT ━━━</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <a href="#" style={{ fontSize: '15px', color: '#667eea', textDecoration: 'none' }}>• Help & FAQs</a>
+            <a href="#" style={{ fontSize: '15px', color: '#667eea', textDecoration: 'none' }}>• Contact Premier U</a>
+            <a href="#" style={{ fontSize: '15px', color: '#667eea', textDecoration: 'none' }}>• Privacy Policy</a>
+            <a href="#" style={{ fontSize: '15px', color: '#667eea', textDecoration: 'none' }}>• Terms of Service</a>
+          </div>
+        </div>
+
+        {/* Danger Zone */}
+        <div style={{ background: '#fff5f5', padding: '24px', borderRadius: '12px', border: '2px solid #fc8181' }}>
+          <div style={{ fontSize: '18px', fontWeight: '700', color: '#c53030', marginBottom: '12px' }}>⚠️ Danger Zone</div>
           <p style={{ fontSize: '14px', color: '#742a2a', marginBottom: '16px', lineHeight: '1.5' }}>
             Resetting will permanently delete your current challenge progress. This action cannot be undone.
           </p>
@@ -1274,8 +1410,9 @@ function SettingsScreen({ onBack }) {
         </div>
 
         <p style={{ marginTop: '20px', textAlign: 'center', fontSize: '13px', color: '#718096' }}>
-          Need help? Email support@reformed.fit
+          Need help? Email support@premieru.com
         </p>
+      </div>
       </div>
     </div>
   );
