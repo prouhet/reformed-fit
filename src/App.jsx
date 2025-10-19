@@ -92,6 +92,7 @@ case 'puid':
 
       case 'assessment':
         return <WalkAssessment 
+          userData={userData}       
           onContinue={(data) => {
             setAssessmentData(data);
             setCurrentScreen('plan');
