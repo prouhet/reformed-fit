@@ -1,8 +1,10 @@
 // ============================================
 // FILE: src/components/EmailPINLogin.jsx
 // Main screen - Email + PIN login OR new patient setup
+// UPDATED FOR SUPABASE
 // ============================================
 import React, { useState } from 'react';
+import { supabase } from '../lib/supabase';
 
 function EmailPINLogin({ onSuccess, onNewPatient }) {
   const [email, setEmail] = useState('');
@@ -18,7 +20,7 @@ function EmailPINLogin({ onSuccess, onNewPatient }) {
     }
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     
     if (!email || pin.length !== 4) {
@@ -30,14 +32,39 @@ function EmailPINLogin({ onSuccess, onNewPatient }) {
     setError('');
 
     try {
-      // Check localStorage for matching user
-      const savedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-      const user = savedUsers.find(u => 
-        u.email.toLowerCase() === email.toLowerCase() && u.pin === pin
-      );
+      // Query Supabase for user with matching email
+      const { data: users, error: fetchError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email.toLowerCase())
+        .limit(1);
 
-      if (user) {
-        // Store current user session
+      if (fetchError) {
+        console.error('Supabase error:', fetchError);
+        setError('Login failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      if (!users || users.length === 0) {
+        setError('No account found with that email');
+        setLoading(false);
+        return;
+      }
+
+      const user = users[0];
+
+      // Check if PIN matches (compare with pin_hash if using bcrypt, or plain pin for now)
+      // For now assuming plain text PIN stored in 'pin' field
+      // TODO: Use bcrypt compare if pin_hash is used
+      if (user.pin_hash === pin || user.pin === pin) {
+        // Update last_login
+        await supabase
+          .from('users')
+          .update({ last_login: new Date().toISOString() })
+          .eq('id', user.id);
+
+        // Store session data
         localStorage.setItem('current_user', JSON.stringify(user));
         localStorage.setItem('user_data', JSON.stringify(user));
         
@@ -47,7 +74,7 @@ function EmailPINLogin({ onSuccess, onNewPatient }) {
           isNew: false
         });
       } else {
-        setError('Invalid email or PIN. Please try again.');
+        setError('Invalid PIN. Please try again.');
         setLoading(false);
       }
     } catch (err) {
@@ -58,7 +85,11 @@ function EmailPINLogin({ onSuccess, onNewPatient }) {
   };
 
   const handleForgotPin = () => {
-    window.location.href = `mailto:connect@reformed.fit?subject=PIN Reset Request&body=Hello, I need to reset my PIN for email: ${email}. Please assist.`;
+    if (!email) {
+      setError('Please enter your email first');
+      return;
+    }
+    window.location.href = `mailto:connect@reformed.fit?subject=PIN%20Reset%20Request&body=Hello%2C%20I%20need%20to%20reset%20my%20PIN%20for%20email%3A%20${encodeURIComponent(email)}.%20Please%20assist.`;
   };
 
   return (
@@ -202,14 +233,13 @@ function EmailPINLogin({ onSuccess, onNewPatient }) {
           }}>
             <button
               onClick={handleForgotPin}
-              disabled={!email}
               style={{
                 background: 'none',
                 border: 'none',
-                color: email ? '#667eea' : '#cbd5e0',
+                color: '#667eea',
                 fontSize: '14px',
                 fontWeight: '600',
-                cursor: email ? 'pointer' : 'not-allowed',
+                cursor: 'pointer',
                 textDecoration: 'underline'
               }}
             >
