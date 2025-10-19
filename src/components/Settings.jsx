@@ -138,12 +138,11 @@ function Settings({ onBack }) {
     }
     
     try {
-      // Update PIN in Supabase
+      // Update PIN in Supabase (only pin_hash column)
       const { error } = await supabase
         .from('users')
         .update({ 
-          pin: pinForm.newPin,
-          pin_hash: pinForm.newPin  // Update both for compatibility
+          pin_hash: pinForm.newPin
         })
         .eq('id', userData.id);
 
@@ -154,7 +153,7 @@ function Settings({ onBack }) {
       }
 
       // Update local storage
-      const updatedUser = { ...userData, pin: pinForm.newPin, pin_hash: pinForm.newPin };
+      const updatedUser = { ...userData, pin_hash: pinForm.newPin };
       localStorage.setItem('user_data', JSON.stringify(updatedUser));
       localStorage.setItem('current_user', JSON.stringify(updatedUser));
       setUserData(updatedUser);
