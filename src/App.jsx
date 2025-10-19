@@ -49,21 +49,25 @@ function App() {
 
   const renderScreen = () => {
     switch (currentScreen) {
-      case 'puid':
-        return <PUIDEntry onContinue={(user) => {
-          if (user.isNew) {
-            setUserData({ ...userData, puid: user.puid });
-            setCurrentScreen('setup');
-          } else {
-            setUserData(user);
-            const savedChallenge = localStorage.getItem('walk_challenge');
-            if (savedChallenge) {
-              setCurrentScreen('daily-checkin');
-            } else {
-              setCurrentScreen('select');
-            }
-          }
-        }} />;
+case 'puid':
+  return <PUIDEntry onContinue={(user) => {
+    console.log('PUIDEntry onContinue called with:', user);
+    
+    if (user.isNew) {
+      setUserData({ ...userData, puid: user.puid });
+      setCurrentScreen('setup');
+    } else {
+      // THIS IS THE KEY FIX - set the full user data!
+      setUserData(user);
+      
+      const savedChallenge = localStorage.getItem('walk_challenge');
+      if (savedChallenge) {
+        setCurrentScreen('daily-checkin');
+      } else {
+        setCurrentScreen('select');
+      }
+    }
+  }} />;
 
       case 'setup':
         return <AccountSetup 
