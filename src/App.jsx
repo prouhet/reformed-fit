@@ -113,28 +113,17 @@ case 'puid':
             setCurrentScreen('daily-checkin');
           }}
         />;
-
 case 'daily-checkin':
-  console.log('=== RENDERING DAILY-CHECKIN ===');
   return <DailyCheckIn 
     onComplete={(status) => {
-      console.log('onComplete called with:', status);
       if (status === 'success') {
         setCurrentScreen('completion-success');
       } else {
         setCurrentScreen('completion-incomplete');
       }
     }}
-    onNavigate={(destination) => {
-      console.log('onNavigate called with:', destination);
-      if (destination === 'roadmap') {
-        setCurrentScreen('roadmap');
-      } else if (destination === 'dashboard') {
-        setCurrentScreen('dashboard-preview');
-      } else if (destination === 'settings') {
-        setCurrentScreen('settings');
-      }
-    }}
+    onViewRoadmap={() => setCurrentScreen('roadmap')}
+    onSettings={() => setCurrentScreen('settings')}
   />;
         
         
