@@ -16,6 +16,7 @@ function EmailPINLogin({ onSuccess, onNewPatient }) {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showForgotPinMessage, setShowForgotPinMessage] = useState(false);
 
   const handlePinInput = (e) => {
     const value = e.target.value.replace(/\D/g, ''); // Only digits
@@ -94,8 +95,116 @@ function EmailPINLogin({ onSuccess, onNewPatient }) {
       setError('Please enter your email first');
       return;
     }
-    window.location.href = `mailto:connect@reformed.fit?subject=PIN%20Reset%20Request&body=Hello%2C%20I%20need%20to%20reset%20my%20PIN%20for%20email%3A%20${encodeURIComponent(email)}.%20Please%20assist.`;
+    setShowForgotPinMessage(true);
   };
+
+  if (showForgotPinMessage) {
+    return (
+      <div className="screen-container">
+        <div className="screen-card" style={{ maxWidth: '480px' }}>
+          <div className="logo">REFORMED.FIT</div>
+          
+          <div style={{
+            textAlign: 'center',
+            fontSize: '48px',
+            marginBottom: '24px'
+          }}>
+            📧
+          </div>
+          
+          <h1 style={{
+            fontSize: '24px',
+            fontWeight: '800',
+            color: '#2d3748',
+            textAlign: 'center',
+            marginBottom: '16px'
+          }}>
+            PIN Reset Request
+          </h1>
+          
+          <div style={{
+            background: '#f7fafc',
+            padding: '24px',
+            borderRadius: '12px',
+            marginBottom: '24px'
+          }}>
+            <p style={{
+              color: '#2d3748',
+              fontSize: '15px',
+              lineHeight: '1.6',
+              marginBottom: '16px'
+            }}>
+              To reset your PIN, please email:
+            </p>
+            <div style={{
+              background: 'white',
+              padding: '16px',
+              borderRadius: '8px',
+              textAlign: 'center',
+              marginBottom: '16px',
+              border: '2px solid #e2e8f0'
+            }}>
+              <a 
+                href="mailto:connect@reformed.fit"
+                style={{
+                  color: '#667eea',
+                  fontSize: '18px',
+                  fontWeight: '700',
+                  textDecoration: 'none'
+                }}
+              >
+                connect@reformed.fit
+              </a>
+            </div>
+            <p style={{
+              color: '#718096',
+              fontSize: '14px',
+              lineHeight: '1.6'
+            }}>
+              Include your email address (<strong>{email}</strong>) in your message and we'll help you reset your PIN.
+            </p>
+          </div>
+
+          <button
+            onClick={() => {
+              window.location.href = `mailto:connect@reformed.fit?subject=PIN%20Reset%20Request&body=Hello%2C%20I%20need%20to%20reset%20my%20PIN%20for%20email%3A%20${encodeURIComponent(email)}.%20Please%20assist.`;
+            }}
+            style={{
+              width: '100%',
+              padding: '16px',
+              background: '#667eea',
+              color: 'white',
+              border: 'none',
+              borderRadius: '10px',
+              fontSize: '16px',
+              fontWeight: '700',
+              cursor: 'pointer',
+              marginBottom: '12px'
+            }}
+          >
+            Open Email App
+          </button>
+
+          <button
+            onClick={() => setShowForgotPinMessage(false)}
+            style={{
+              width: '100%',
+              padding: '16px',
+              background: 'white',
+              color: '#667eea',
+              border: '2px solid #667eea',
+              borderRadius: '10px',
+              fontSize: '16px',
+              fontWeight: '700',
+              cursor: 'pointer'
+            }}
+          >
+            ← Back to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="screen-container">
