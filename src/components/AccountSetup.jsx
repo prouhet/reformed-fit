@@ -1,5 +1,5 @@
 // ==============================================
-// UPDATED ACCOUNT SETUP COMPONENT
+// UPDATED ACCOUNT SETUP COMPONENT - WITH LOCATION
 // Location: src/components/AccountSetup.jsx
 // ==============================================
 
@@ -11,6 +11,7 @@ function AccountSetup({ puid, onContinue }) {
     name: '',
     email: '',
     phone: '',
+    clinicLocation: 'swansea', // NEW: Default location
     pin: '',
     confirmPin: ''
   });
@@ -39,12 +40,14 @@ function AccountSetup({ puid, onContinue }) {
     setLoading(true);
 
     try {
-      // Insert user into Supabase
+      // Insert user into Supabase WITH provider and clinic_location
       const { data, error: insertError } = await supabase
         .from('users')
         .insert([
           {
             pu_id: puid,
+            provider: 'premieru', // NEW: Add provider
+            clinic_location: formData.clinicLocation, // NEW: Add location
             name: formData.name,
             email: formData.email,
             phone: formData.phone,
@@ -90,6 +93,22 @@ function AccountSetup({ puid, onContinue }) {
         </p>
         
         <form onSubmit={handleSubmit} className="screen-form">
+          {/* NEW: Clinic Location Dropdown */}
+          <div className="input-group">
+            <label className="input-label">Which Premier U location do you visit?</label>
+            <select
+              className="text-input"
+              value={formData.clinicLocation}
+              onChange={(e) => handleChange('clinicLocation', e.target.value)}
+              required
+              disabled={loading}
+            >
+              <option value="swansea">Swansea</option>
+              <option value="southcounty">South County</option>
+              <option value="marion">Marion</option>
+            </select>
+          </div>
+
           <div className="input-group">
             <label className="input-label">Full Name</label>
             <input
