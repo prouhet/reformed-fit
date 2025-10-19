@@ -264,6 +264,44 @@ function DailyCheckIn({ onComplete, onViewRoadmap, onSettings }) {
     return <div>Loading...</div>;
   }
 
+// ADD THIS - Lock Day 0
+if (currentDay === 0) {
+  return (
+    <div className="screen-container">
+      <div className="screen-card">
+        <div className="logo">REFORMED.FIT × PREMIER U</div>
+        
+        <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+          <div style={{ fontSize: '64px', marginBottom: '20px' }}>🔒</div>
+          <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#2d3748', marginBottom: '12px' }}>
+            Challenge Starts Tomorrow!
+          </h2>
+          <p style={{ fontSize: '16px', color: '#718096', marginBottom: '24px' }}>
+            Your Day 1 begins tomorrow. Come back then to start checking in!
+          </p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="submit-button"
+            style={{ maxWidth: '300px', margin: '0 auto' }}
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// POST-SUBMIT VIEW
+if (checkedIn) {
+
+  
+
+
+
+
+
+  
   // POST-SUBMIT VIEW
   if (checkedIn) {
     const getTomorrowGoal = () => {
