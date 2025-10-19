@@ -103,22 +103,18 @@ function WalkAssessment({ userData, onContinue }) {
     try {
       const plan = generatePlan();
       
-      // Calculate dates
+      // Calculate start date (tomorrow)
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       tomorrow.setHours(0, 0, 0, 0);
-      
-      const endDate = new Date(tomorrow);
-      endDate.setDate(endDate.getDate() + 30);
 
-      // Save to Supabase
+      // Save to Supabase (end_date is auto-generated)
       const { data: challengeData, error } = await supabase
         .from('user_challenges')
         .insert({
           user_id: userData.id,
           challenge_id: 'walk',
           start_date: tomorrow.toISOString().split('T')[0],
-          end_date: endDate.toISOString().split('T')[0],
           status: 'pending',
           assessment_data: {
             frequency: formData.frequency,
