@@ -107,12 +107,18 @@ case 'puid':
     }}
   />;
 
-      case 'dashboard-preview':
-        return <DashboardPreview 
-          onContinue={() => {
-            setCurrentScreen('daily-checkin');
-          }}
-        />;
+case 'dashboard-preview':
+  return <DashboardPreview 
+    onNavigate={(destination) => {
+      if (destination === 'roadmap') {
+        setCurrentScreen('roadmap');
+      } else if (destination === 'settings') {
+        setCurrentScreen('settings');
+      }
+    }}
+  />;
+
+        
 case 'daily-checkin':
   return <DailyCheckIn 
     onComplete={(status) => {
