@@ -133,7 +133,7 @@ case 'daily-checkin':
       }
     }}
   />;
-
+        
       case 'completion-success':
         return <CompletionSuccess 
           onBack={() => setCurrentScreen('select')}
