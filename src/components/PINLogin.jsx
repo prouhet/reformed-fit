@@ -1,8 +1,15 @@
 // ============================================
 // FILE: src/components/PINLogin.jsx
 // PIN-based login that extracts PUID from URL
+// UPDATED FOR SUPABASE
 // ============================================
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 function PINLogin({ puid, provider, onSuccess }) {
   const [pin, setPin] = useState('');
@@ -39,33 +46,60 @@ function PINLogin({ puid, provider, onSuccess }) {
     setError('');
 
     try {
-      // Check localStorage first (for demo/development)
-      const savedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-      const user = savedUsers.find(u => u.puid === puid && u.pin === pin);
+      // Query Supabase for user with matching PUID
+      const { data: users, error: fetchError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('pu_id', puid)
+        .limit(1);
 
-      if (user) {
-        // Store current user session
+      if (fetchError) {
+        console.error('Supabase error:', fetchError);
+        setError('Login failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      if (!users || users.length === 0) {
+        setError('Invalid patient ID');
+        setLoading(false);
+        return;
+      }
+
+      const user = users[0];
+
+      // Check if PIN matches (compare with pin_hash if using bcrypt, or plain pin for now)
+      // For now assuming plain text PIN stored in 'pin' field
+      // TODO: Use bcrypt compare if pin_hash is used
+      if (user.pin_hash === pin || user.pin === pin) {
+        // Update last_login
+        await supabase
+          .from('users')
+          .update({ last_login: new Date().toISOString() })
+          .eq('id', user.id);
+
+        // Store session data
         localStorage.setItem('current_user', JSON.stringify(user));
         localStorage.setItem('user_data', JSON.stringify(user));
         
-        // Success! Pass user data back
+        // Success!
         onSuccess({
           ...user,
           isNew: false
         });
       } else {
         setError('Invalid PIN. Please try again.');
+        setLoading(false);
       }
     } catch (err) {
       console.error('Login error:', err);
       setError('Login failed. Please try again.');
-    } finally {
       setLoading(false);
     }
   };
 
   const handleForgotPin = () => {
-    window.location.href = `mailto:connect@reformed.fit?subject=PIN Reset Request - ${puid}&body=Hello, I need to reset my PIN for account ${puid}. Please assist.`;
+    window.location.href = `mailto:connect@reformed.fit?subject=PIN%20Reset%20Request%20-%20${puid}&body=Hello%2C%20I%20need%20to%20reset%20my%20PIN%20for%20account%20${puid}.%20Please%20assist.`;
   };
 
   return (
@@ -107,7 +141,7 @@ function PINLogin({ puid, provider, onSuccess }) {
           Enter your 4-digit PIN to continue
         </p>
 
-        <form onSubmit={handleSubmit}>
+        <div>
           <div style={{ marginBottom: '20px' }}>
             <label style={{
               display: 'block',
@@ -125,6 +159,11 @@ function PINLogin({ puid, provider, onSuccess }) {
               maxLength="4"
               value={pin}
               onChange={handlePinInput}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && pin.length === 4) {
+                  handleSubmit(e);
+                }
+              }}
               placeholder="••••"
               autoFocus
               style={{
@@ -160,7 +199,7 @@ function PINLogin({ puid, provider, onSuccess }) {
           </div>
 
           <button
-            type="submit"
+            onClick={handleSubmit}
             disabled={pin.length !== 4 || loading}
             style={{
               width: '100%',
@@ -179,7 +218,7 @@ function PINLogin({ puid, provider, onSuccess }) {
           >
             {loading ? 'Logging in...' : 'Login'}
           </button>
-        </form>
+        </div>
 
         <div style={{
           marginTop: '24px',
@@ -206,7 +245,7 @@ function PINLogin({ puid, provider, onSuccess }) {
             fontSize: '12px',
             color: '#a0aec0'
           }}>
-            We'll help you reset it
+            We'll help you reset it via email
           </p>
         </div>
 
