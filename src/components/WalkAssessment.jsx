@@ -115,7 +115,7 @@ function WalkAssessment({ userData, onContinue }) {
           user_id: userData.id,
           challenge_id: 'ed0083d9-9061-4d9d-8391-20fc761c431e', // Walk Challenge UUID
           start_date: tomorrow.toISOString().split('T')[0],
-          status: 'pending',
+          status: 'active',
           assessment_data: {
             frequency: formData.frequency,
             duration: formData.duration,
