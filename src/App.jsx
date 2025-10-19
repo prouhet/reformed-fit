@@ -133,12 +133,6 @@ case 'daily-checkin':
       }
     }}
   />;
-This will make the "View Roadmap" and "Back to Dashboard" buttons work!
-
-Make the change, commit, push, rebuild, and test!
-
-
-
 
       case 'completion-success':
         return <CompletionSuccess 
