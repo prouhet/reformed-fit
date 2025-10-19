@@ -122,20 +122,27 @@ function DailyCheckIn({ onComplete, onViewRoadmap, onSettings }) {
     loadChallengeData();
   }, []);
 
-  const loadChallengeData = () => {
-    const saved = localStorage.getItem('walk_challenge');
-    if (!saved) return;
+const loadChallengeData = () => {
+  const saved = localStorage.getItem('walk_challenge');
+  if (!saved) return;
 
-    const data = JSON.parse(saved);
-    
-    // Calculate current day based on start date
-    const startDate = new Date(data.startDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    startDate.setHours(0, 0, 0, 0);
-    
-    const daysDiff = Math.floor((today - startDate) / (1000 * 60 * 60 * 24)) + 1;
-    const day = Math.max(1, Math.min(30, daysDiff));
+  const data = JSON.parse(saved);
+  
+  // Calculate current day based on start date
+  const startDate = new Date(data.startDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  startDate.setHours(0, 0, 0, 0);
+  
+  const daysDiff = Math.floor((today - startDate) / (1000 * 60 * 60 * 24)) + 1;
+  const day = Math.max(1, Math.min(30, daysDiff));
+  
+  console.log('=== DAILY CHECK-IN DAY CALCULATION ===');
+  console.log('Start Date:', startDate);
+  console.log('Today:', today);
+  console.log('Days Diff:', daysDiff);
+  console.log('Calculated Day:', day);
+  console.log('====================================');
     
     // Determine current week and goal
     let goal;
