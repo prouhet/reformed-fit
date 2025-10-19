@@ -114,11 +114,31 @@ case 'puid':
           }}
         />;
 
-      case 'daily-checkin':
-        return <DailyCheckIn 
-          onViewRoadmap={() => setCurrentScreen('roadmap')}
-          onSettings={() => setCurrentScreen('settings')}
-        />;
+case 'daily-checkin':
+  return <DailyCheckIn 
+    onComplete={(status) => {
+      if (status === 'success') {
+        setCurrentScreen('completion-success');
+      } else {
+        setCurrentScreen('completion-incomplete');
+      }
+    }}
+    onNavigate={(destination) => {
+      if (destination === 'roadmap') {
+        setCurrentScreen('roadmap');
+      } else if (destination === 'dashboard') {
+        setCurrentScreen('dashboard-preview');
+      } else if (destination === 'settings') {
+        setCurrentScreen('settings');
+      }
+    }}
+  />;
+This will make the "View Roadmap" and "Back to Dashboard" buttons work!
+
+Make the change, commit, push, rebuild, and test!
+
+
+
 
       case 'completion-success':
         return <CompletionSuccess 
