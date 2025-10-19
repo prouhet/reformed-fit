@@ -1,11 +1,12 @@
 // ============================================
-// Walk Assessment Component
+// Walk Assessment Component - WITH SUPABASE
 // Location: src/components/WalkAssessment.jsx
 //
 // STEP 1 OF 2: Collect fitness assessment
 // ============================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
 
 function WalkAssessment({ userData, onContinue }) {
   const [formData, setFormData] = useState({
@@ -13,6 +14,39 @@ function WalkAssessment({ userData, onContinue }) {
     duration: '',
     emailReminders: true
   });
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    checkExistingChallenge();
+  }, []);
+
+  const checkExistingChallenge = async () => {
+    try {
+      // Check if user already has walk challenge with assessment
+      const { data, error } = await supabase
+        .from('user_challenges')
+        .select('*')
+        .eq('user_id', userData.id)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      if (data && data.assessment_data) {
+        // Already did assessment, skip to plan
+        console.log('Existing assessment found, skipping to plan');
+        onContinue({
+          plan: data.personalized_plan,
+          emailReminders: data.assessment_data.emailReminders || true,
+          existingChallenge: data
+        });
+        return;
+      }
+    } catch (err) {
+      console.log('No existing challenge, continuing with assessment');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const generatePlan = () => {
     // Calculate score
@@ -62,17 +96,87 @@ function WalkAssessment({ userData, onContinue }) {
     };
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
     
-    const plan = generatePlan();
-    
-    // Pass plan and settings to next screen
-    onContinue({
-      plan: plan,
-      emailReminders: formData.emailReminders
-    });
+    try {
+      const plan = generatePlan();
+      
+      // Calculate dates
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      
+      const endDate = new Date(tomorrow);
+      endDate.setDate(endDate.getDate() + 30);
+
+      // Save to Supabase
+      const { data: challengeData, error } = await supabase
+        .from('user_challenges')
+        .insert({
+          user_id: userData.id,
+          challenge_id: 'walk',
+          start_date: tomorrow.toISOString().split('T')[0],
+          end_date: endDate.toISOString().split('T')[0],
+          status: 'pending',
+          assessment_data: {
+            frequency: formData.frequency,
+            duration: formData.duration,
+            emailReminders: formData.emailReminders
+          },
+          personalized_plan: plan,
+          total_points: 0
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error saving assessment:', error);
+        alert('Failed to save assessment. Please try again.');
+        setSubmitting(false);
+        return;
+      }
+
+      console.log('Assessment saved successfully:', challengeData);
+
+      // Update user email reminder settings
+      await supabase
+        .from('users')
+        .update({ email_reminder_enabled: formData.emailReminders })
+        .eq('id', userData.id);
+
+      // Save to localStorage for quick access
+      localStorage.setItem('assessment_data', JSON.stringify(formData));
+      localStorage.setItem('walk_challenge', JSON.stringify({
+        ...challengeData,
+        currentDay: 0
+      }));
+
+      // Continue to plan overview
+      onContinue({
+        plan: plan,
+        emailReminders: formData.emailReminders,
+        challenge: challengeData
+      });
+
+    } catch (err) {
+      console.error('Error:', err);
+      alert('An error occurred. Please try again.');
+      setSubmitting(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="screen-container">
+        <div className="screen-card">
+          <div className="logo">STUDIO STRONG × PREMIER U</div>
+          <p style={{ textAlign: 'center', color: '#718096' }}>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="screen-container">
@@ -110,6 +214,7 @@ function WalkAssessment({ userData, onContinue }) {
                     checked={formData.frequency === option.value}
                     onChange={(e) => setFormData({...formData, frequency: e.target.value})}
                     required
+                    disabled={submitting}
                   />
                   <span className="radio-label">{option.label}</span>
                 </label>
@@ -140,6 +245,7 @@ function WalkAssessment({ userData, onContinue }) {
                     checked={formData.duration === option.value}
                     onChange={(e) => setFormData({...formData, duration: e.target.value})}
                     required
+                    disabled={submitting}
                   />
                   <span className="radio-label">{option.label}</span>
                 </label>
@@ -157,6 +263,7 @@ function WalkAssessment({ userData, onContinue }) {
                 checked={formData.emailReminders}
                 onChange={(e) => setFormData({...formData, emailReminders: e.target.checked})}
                 className="checkbox-input"
+                disabled={submitting}
               />
               <span className="checkbox-text">
                 Send me a reminder email if I miss a daily check-in
@@ -167,8 +274,12 @@ function WalkAssessment({ userData, onContinue }) {
             </p>
           </div>
 
-          <button type="submit" className="submit-button">
-            Continue
+          <button 
+            type="submit" 
+            className="submit-button"
+            disabled={submitting}
+          >
+            {submitting ? 'Saving...' : 'Continue'}
           </button>
         </form>
       </div>
