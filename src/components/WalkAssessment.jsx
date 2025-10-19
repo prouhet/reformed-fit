@@ -113,7 +113,7 @@ function WalkAssessment({ userData, onContinue }) {
         .from('user_challenges')
         .insert({
           user_id: userData.id,
-          challenge_id: 'walk',
+          challenge_id: 'ed0083d9-9061-4d9d-8391-20fc761c431e', // Walk Challenge UUID
           start_date: tomorrow.toISOString().split('T')[0],
           status: 'pending',
           assessment_data: {
