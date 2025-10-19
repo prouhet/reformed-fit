@@ -1,5 +1,5 @@
 // ============================================
-// FILE: src/components/Settings.jsx
+// FILE: src/components/Settings.jsx - WITH PIN CHANGE
 // ============================================
 import React, { useState, useEffect } from 'react';
 
@@ -13,10 +13,16 @@ function Settings({ onBack }) {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [isEditingAccount, setIsEditingAccount] = useState(false);
+  const [isChangingPin, setIsChangingPin] = useState(false);
   const [accountForm, setAccountForm] = useState({
     name: '',
     email: '',
     phone: ''
+  });
+  const [pinForm, setPinForm] = useState({
+    currentPin: '',
+    newPin: '',
+    confirmPin: ''
   });
 
   useEffect(() => {
@@ -52,7 +58,17 @@ function Settings({ onBack }) {
 
   const handleSaveAccount = () => {
     const updatedUser = { ...userData, ...accountForm };
+    
+    // Update in users array
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    const userIndex = users.findIndex(u => u.puid === userData.puid);
+    if (userIndex !== -1) {
+      users[userIndex] = updatedUser;
+      localStorage.setItem('users', JSON.stringify(users));
+    }
+    
     localStorage.setItem('user_data', JSON.stringify(updatedUser));
+    localStorage.setItem('current_user', JSON.stringify(updatedUser));
     setUserData(updatedUser);
     setIsEditingAccount(false);
     alert('Account information updated successfully!');
@@ -65,6 +81,44 @@ function Settings({ onBack }) {
       phone: userData?.phone || ''
     });
     setIsEditingAccount(false);
+  };
+
+  const handleChangePin = () => {
+    // Validate current PIN
+    if (pinForm.currentPin !== userData.pin) {
+      alert('Current PIN is incorrect');
+      return;
+    }
+    
+    // Validate new PIN
+    if (pinForm.newPin.length !== 4) {
+      alert('New PIN must be exactly 4 digits');
+      return;
+    }
+    
+    // Validate confirmation
+    if (pinForm.newPin !== pinForm.confirmPin) {
+      alert('New PINs do not match!');
+      return;
+    }
+    
+    // Update PIN
+    const updatedUser = { ...userData, pin: pinForm.newPin };
+    
+    // Update in users array
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    const userIndex = users.findIndex(u => u.puid === userData.puid);
+    if (userIndex !== -1) {
+      users[userIndex] = updatedUser;
+      localStorage.setItem('users', JSON.stringify(users));
+    }
+    
+    localStorage.setItem('user_data', JSON.stringify(updatedUser));
+    localStorage.setItem('current_user', JSON.stringify(updatedUser));
+    setUserData(updatedUser);
+    setIsChangingPin(false);
+    setPinForm({ currentPin: '', newPin: '', confirmPin: '' });
+    alert('PIN changed successfully!');
   };
 
   const handleReset = () => {
@@ -231,6 +285,149 @@ function Settings({ onBack }) {
             )}
           </div>
 
+          {/* Security Section - PIN Change */}
+          <div style={{ background: 'white', padding: '24px', borderRadius: '12px', border: '2px solid #e2e8f0', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ fontSize: '18px', fontWeight: '700', color: '#2d3748' }}>SECURITY</div>
+              {!isChangingPin && (
+                <button
+                  onClick={() => setIsChangingPin(true)}
+                  style={{
+                    padding: '8px 16px',
+                    background: '#667eea',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Change PIN
+                </button>
+              )}
+            </div>
+
+            {isChangingPin ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#2d3748', marginBottom: '6px' }}>
+                    Current PIN
+                  </label>
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    maxLength="4"
+                    value={pinForm.currentPin}
+                    onChange={(e) => setPinForm({...pinForm, currentPin: e.target.value.replace(/\D/g, '')})}
+                    placeholder="••••"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      fontSize: '18px',
+                      border: '2px solid #e2e8f0',
+                      borderRadius: '6px',
+                      outline: 'none',
+                      letterSpacing: '6px',
+                      textAlign: 'center',
+                      fontWeight: '700'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#2d3748', marginBottom: '6px' }}>
+                    New PIN
+                  </label>
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    maxLength="4"
+                    value={pinForm.newPin}
+                    onChange={(e) => setPinForm({...pinForm, newPin: e.target.value.replace(/\D/g, '')})}
+                    placeholder="••••"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      fontSize: '18px',
+                      border: '2px solid #e2e8f0',
+                      borderRadius: '6px',
+                      outline: 'none',
+                      letterSpacing: '6px',
+                      textAlign: 'center',
+                      fontWeight: '700'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#2d3748', marginBottom: '6px' }}>
+                    Confirm New PIN
+                  </label>
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    maxLength="4"
+                    value={pinForm.confirmPin}
+                    onChange={(e) => setPinForm({...pinForm, confirmPin: e.target.value.replace(/\D/g, '')})}
+                    placeholder="••••"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      fontSize: '18px',
+                      border: '2px solid #e2e8f0',
+                      borderRadius: '6px',
+                      outline: 'none',
+                      letterSpacing: '6px',
+                      textAlign: 'center',
+                      fontWeight: '700'
+                    }}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button
+                    onClick={handleChangePin}
+                    disabled={pinForm.currentPin.length !== 4 || pinForm.newPin.length !== 4 || pinForm.confirmPin.length !== 4}
+                    style={{
+                      flex: 1,
+                      padding: '12px',
+                      background: (pinForm.currentPin.length === 4 && pinForm.newPin.length === 4 && pinForm.confirmPin.length === 4) ? '#48bb78' : '#cbd5e0',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: (pinForm.currentPin.length === 4 && pinForm.newPin.length === 4 && pinForm.confirmPin.length === 4) ? 'pointer' : 'not-allowed'
+                    }}
+                  >
+                    Save New PIN
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsChangingPin(false);
+                      setPinForm({ currentPin: '', newPin: '', confirmPin: '' });
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: '12px',
+                      background: '#e2e8f0',
+                      color: '#4a5568',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ fontSize: '14px', color: '#718096' }}>
+                Your 4-digit PIN keeps your account secure
+              </div>
+            )}
+          </div>
+
           {/* Email Reminders Section */}
           <div style={{ background: 'white', padding: '24px', borderRadius: '12px', border: '2px solid #e2e8f0', marginBottom: '16px' }}>
             <div style={{ fontSize: '18px', fontWeight: '700', color: '#2d3748', marginBottom: '16px' }}>EMAIL REMINDERS</div>
@@ -364,8 +561,8 @@ function Settings({ onBack }) {
           <div style={{ background: 'white', padding: '24px', borderRadius: '12px', border: '2px solid #e2e8f0', marginBottom: '16px' }}>
             <div style={{ fontSize: '18px', fontWeight: '700', color: '#2d3748', marginBottom: '16px' }}>SUPPORT</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <a href="mailto:connect@reformed.fit" style={{ fontSize: '15px', color: '#667eea', textDecoration: 'none' }}>• Contact Support</a>
               <a href="#" style={{ fontSize: '15px', color: '#667eea', textDecoration: 'none' }}>• Help & FAQs</a>
-              <a href="#" style={{ fontSize: '15px', color: '#667eea', textDecoration: 'none' }}>• Contact Premier U</a>
               <a href="#" style={{ fontSize: '15px', color: '#667eea', textDecoration: 'none' }}>• Privacy Policy</a>
               <a href="#" style={{ fontSize: '15px', color: '#667eea', textDecoration: 'none' }}>• Terms of Service</a>
             </div>
@@ -383,7 +580,7 @@ function Settings({ onBack }) {
           </div>
 
           <p style={{ marginTop: '20px', textAlign: 'center', fontSize: '13px', color: '#718096' }}>
-            Need help? Email support@premieru.com
+            Need help? Email connect@reformed.fit
           </p>
         </div>
       </div>
