@@ -52,13 +52,37 @@ function Settings({ onBack }) {
     }
   }, []);
 
-  const handleSaveSettings = () => {
+  const handleSaveSettings = async () => {
     setIsSaving(true);
-    localStorage.setItem('user_settings', JSON.stringify(settings));
-    setTimeout(() => {
+    
+    try {
+      // Update in Supabase
+      const { error } = await supabase
+        .from('users')
+        .update({
+          email_reminder_time: settings.reminderTime,
+          email_reminder_enabled: settings.emailRemindersEnabled,
+          timezone: settings.timezone
+        })
+        .eq('id', userData.id);
+
+      if (error) {
+        console.error('Supabase error:', error);
+        alert('Failed to save settings. Please try again.');
+        setIsSaving(false);
+        return;
+      }
+
+      // Also save to localStorage for quick access
+      localStorage.setItem('user_settings', JSON.stringify(settings));
+      
       setIsSaving(false);
       alert('Settings saved successfully!');
-    }, 500);
+    } catch (err) {
+      console.error('Save settings error:', err);
+      alert('Failed to save settings. Please try again.');
+      setIsSaving(false);
+    }
   };
 
   const handleSaveAccount = async () => {
