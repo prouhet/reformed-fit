@@ -1,6 +1,3 @@
-29.36 KB •761 lines
-•
-Formatting may be inconsistent from source
 // ============================================
 // App.jsx - COMPLETE WALK CHALLENGE APP
 // All 11 screens included
@@ -758,6 +755,7 @@ function DashboardPreviewScreen({ onNavigate }) {
     </div>
   );
 }
+
 // ============================================
 // SCREEN 7: DAILY CHECK-IN
 // ============================================
@@ -1043,32 +1041,62 @@ function CompletionIncompleteScreen({ onTryAgain, onSelectDifferent }) {
 // ============================================
 function RoadmapScreen({ onBack }) {
   const [challenge, setChallenge] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const savedChallenge = localStorage.getItem('walk_challenge');
+    console.log('Roadmap - Raw localStorage:', savedChallenge);
     if (savedChallenge) {
-      const data = JSON.parse(savedChallenge);
-      setChallenge(data);
+      try {
+        const data = JSON.parse(savedChallenge);
+        console.log('Roadmap - Parsed challenge:', data);
+        setChallenge(data);
+      } catch (error) {
+        console.error('Roadmap - Parse error:', error);
+      }
     }
+    setLoading(false);
   }, []);
 
-  if (!challenge) {
-    return <div>Loading...</div>;
-  }
-
   const getWeekGoal = (week) => {
-    if (week === 1) return challenge.goals.week1;
-    if (week === 2) return challenge.goals.week2;
-    if (week === 3) return challenge.goals.week3;
-    return challenge.goals.week4;
+    if (!challenge || !challenge.goals) return 0;
+    if (week === 1) return challenge.goals.week1 || 0;
+    if (week === 2) return challenge.goals.week2 || 0;
+    if (week === 3) return challenge.goals.week3 || 0;
+    return challenge.goals.week4 || 0;
   };
 
   const getDayStatus = (day) => {
+    if (!challenge) return 'locked';
     if (day > challenge.currentDay) return 'locked';
-    const checkIn = challenge.checkIns.find(c => c.day === day);
+    if (challenge.currentDay === 0) return 'locked';
+    const checkIn = challenge.checkIns && challenge.checkIns.find(c => c.day === day);
     if (!checkIn) return 'missed';
     return checkIn.points === 2 ? 'complete' : 'partial';
   };
+
+  if (loading) {
+    return (
+      <div className="screen-container">
+        <div className="screen-card">
+          <p>Loading roadmap...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!challenge) {
+    return (
+      <div className="screen-container">
+        <div className="screen-card">
+          <button onClick={onBack} style={{ marginBottom: '20px', padding: '10px 20px', background: 'white', border: '2px solid #e2e8f0', borderRadius: '8px', color: '#4a5568', fontWeight: '600', cursor: 'pointer' }}>
+            ← Back
+          </button>
+          <p>No challenge data found. Please start a challenge first.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="screen-container">
@@ -1215,7 +1243,7 @@ function SettingsScreen({ onBack }) {
           </div>
         </div>
 
-        {challenge && (
+{challenge && (
           <div style={{ background: '#f7fafc', padding: '20px', borderRadius: '12px', marginBottom: '20px', border: '2px solid #e2e8f0' }}>
             <div style={{ fontSize: '16px', fontWeight: '700', color: '#2d3748', marginBottom: '16px' }}>Current Challenge</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
