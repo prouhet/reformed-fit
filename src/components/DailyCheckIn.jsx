@@ -134,8 +134,8 @@ const loadChallengeData = () => {
   today.setHours(0, 0, 0, 0);
   startDate.setHours(0, 0, 0, 0);
   
-  const daysDiff = Math.floor((today - startDate) / (1000 * 60 * 60 * 24)) + 1;
-  const day = Math.max(1, Math.min(30, daysDiff));
+const daysDiff = Math.floor((today - startDate) / (1000 * 60 * 60 * 24)) + 1;
+const day = Math.max(0, Math.min(30, daysDiff));  // Changed Math.max(1, ...) to Math.max(0, ...)
   
   console.log('=== DAILY CHECK-IN DAY CALCULATION ===');
   console.log('Start Date:', startDate);
