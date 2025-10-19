@@ -115,8 +115,10 @@ case 'puid':
         />;
 
 case 'daily-checkin':
+  console.log('=== RENDERING DAILY-CHECKIN ===');
   return <DailyCheckIn 
     onComplete={(status) => {
+      console.log('onComplete called with:', status);
       if (status === 'success') {
         setCurrentScreen('completion-success');
       } else {
@@ -124,6 +126,7 @@ case 'daily-checkin':
       }
     }}
     onNavigate={(destination) => {
+      console.log('onNavigate called with:', destination);
       if (destination === 'roadmap') {
         setCurrentScreen('roadmap');
       } else if (destination === 'dashboard') {
@@ -133,6 +136,7 @@ case 'daily-checkin':
       }
     }}
   />;
+        
         
       case 'completion-success':
         return <CompletionSuccess 
