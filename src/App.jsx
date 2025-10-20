@@ -63,23 +63,42 @@ function App() {
     }
   }, []);
 
-  const navigateToCorrectScreen = (user) => {
-    const savedChallenge = localStorage.getItem('walk_challenge');
-    if (savedChallenge) {
-      const challenge = JSON.parse(savedChallenge);
-      if (challenge.status === 'completed') {
-        setCurrentScreen('completion-success');
-      } else if (challenge.status === 'incomplete') {
-        setCurrentScreen('completion-incomplete');
-      } else if (challenge.status === 'pending') {
-        setCurrentScreen('dashboard-preview');
-      } else {
-        setCurrentScreen('daily-checkin');
-      }
+const navigateToCorrectScreen = (user) => {
+  const savedChallenge = localStorage.getItem('walk_challenge');
+  if (savedChallenge) {
+    const challenge = JSON.parse(savedChallenge);
+    
+    // Calculate current day
+    const startDate = new Date(challenge.startDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    startDate.setHours(0, 0, 0, 0);
+    const daysDiff = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+    const currentDay = daysDiff + 1;
+    
+    console.log('=== APP.JSX NAVIGATION ===');
+    console.log('Start Date:', startDate);
+    console.log('Today:', today);
+    console.log('Current Day:', currentDay);
+    console.log('Challenge Status:', challenge.status);
+    console.log('========================');
+    
+    // Route based on status and day
+    if (challenge.status === 'completed') {
+      setCurrentScreen('completion-success');
+    } else if (challenge.status === 'incomplete') {
+      setCurrentScreen('completion-incomplete');
+    } else if (currentDay < 1) {
+      // Day 0 - show preview
+      setCurrentScreen('dashboard-preview');
     } else {
-      setCurrentScreen('select');
+      // Day 1+ - show daily check-in
+      setCurrentScreen('daily-checkin');
     }
-  };
+  } else {
+    setCurrentScreen('select');
+  }
+};
 
   const renderScreen = () => {
     if (currentScreen === 'loading') {
